@@ -7,7 +7,7 @@ while (True):
     cv.imshow("ext", frame)
 
     if cv.waitKey(1) & 0xFF == ord('s'):
-        cv.imwrite("calibration/img" + str(i) + ".png", frame)
+        cv.imwrite("/home/pauwels/Documents/pgc/exp/camera-calib/calibration-pics/img" + str(i) + ".png", frame)
         i += 1
 
     if cv.waitKey(1) & 0xFF == ord('q'):

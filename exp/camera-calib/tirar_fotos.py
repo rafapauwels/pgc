@@ -1,17 +1,33 @@
 import cv2 as cv
+import os
 
-cam = cv.VideoCapture(0)
-i = 0;
-while (True):
-    _, frame = cam.read()
-    cv.imshow("ext", frame)
+op_cam = int(input("Digite 0 para camera esquerda e 2 para direita e 4 para deletar as imagens: "))
 
-    if cv.waitKey(1) & 0xFF == ord('s'):
-        cv.imwrite("/home/pauwels/Documents/pgc/exp/camera-calib/calibration-pics/img" + str(i) + ".png", frame)
-        i += 1
+path = "/home/pauwels/Documents/pgc/exp/camera-calib/calibration-pics/"
 
-    if cv.waitKey(1) & 0xFF == ord('q'):
-        break
+if op_cam == 4:
+    for item in os.listdir(path):
+        if item.endswith(".png"):
+            os.remove(os.path.join(path, item))
+else:
+    cam = cv.VideoCapture(op_cam)
+    i = 0
+    while (True):
+        _, frame = cam.read()
+        cv.imshow("ext", frame)
 
-cam.release()
-cv.destroyAllWindows()
+        key = cv.waitKey(1)
+        if  key & 0xFF == ord('q'):
+            break
+
+        if key & 0xFF == ord('s'):
+            lado = "-esquerda" if op_cam == 0 else "-direita"
+            arquivo = path + "img" + str(i) + lado + ".png"
+            print(arquivo + " salvo.")
+            cv.imwrite(arquivo, frame)
+            i += 1
+
+        
+
+    cam.release()
+    cv.destroyAllWindows()

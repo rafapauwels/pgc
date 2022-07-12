@@ -1,69 +1,72 @@
 import numpy as np
 import cv2 as cv
 import glob
-import os
 
-def main():
-    gerar_matriz("esquerda")
-    gerar_matriz("direita")
-
-def gerar_matriz(lado):
-    # tamanhoChess = (24,17)
+def calibrarCameras():
     tamanhoChess = (5,5)
 
     criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
-    # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
     objp = np.zeros((tamanhoChess[0] * tamanhoChess[1],3), np.float32)
     objp[:,:2] = np.mgrid[0:tamanhoChess[0],0:tamanhoChess[1]].T.reshape(-1,2)
 
-    # Arrays to store object points and image points from all the images.
-    objpoints = [] # 3d point in real world space
-    imgpoints = [] # 2d points in image plane.
+    objpoints = []
+    imgpointsEsquerda = []
+    imgpointsDireita = []
 
     path = '/home/pauwels/Documents/Sync/UFABC/PGC/pgc/exp/camera-calib'
-    images = glob.glob(path + '/calibration-pics/*' + str(lado) +  '.png')
+    imagesEsquerda = glob.glob(path + '/calibration-pics/esquerda/*.png')
+    imagesDireita = glob.glob(path + '/calibration-pics/direita/*.png')
 
     count = 0
-    for fname in images:
-        img = cv.imread(fname)
-        gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-        # Find the chess board corners
-        ret, corners = cv.findChessboardCorners(gray, tamanhoChess, None)
-        # If found, add object points, image points (after refining them)
-        if ret == True:
+    for esq, direita in zip(imagesEsquerda, imagesDireita):
+        imgEsquerda = cv.imread(esq)
+        imgDireita = cv.imread(direita)
+
+        grayEsquerda = cv.cvtColor(imgEsquerda, cv.COLOR_BGR2GRAY)
+        grayDireita = cv.cvtColor(imgDireita, cv.COLOR_BGR2GRAY)
+
+        retE, cornersE = cv.findChessboardCorners(grayEsquerda, tamanhoChess, None)
+        retD, cornersD = cv.findChessboardCorners(grayDireita, tamanhoChess, None)
+
+        if retE and retD == True:
             count += 1
             objpoints.append(objp)
-            corners2 = cv.cornerSubPix(gray,corners, (11,11), (-1,-1), criteria)
-            imgpoints.append(corners)
-            # Draw and display the corners
-            cv.drawChessboardCorners(img, tamanhoChess, corners2, ret)
-            cv.imshow('img', img)
-            cv.waitKey(3000)
+
+            cornersSubEsquerda = cv.cornerSubPix(grayEsquerda, cornersE, (11,11), (-1,-1), criteria)
+            imgpointsEsquerda.append(cornersSubEsquerda)
+
+            cornersSubDireita = cv.cornerSubPix(grayDireita, cornersD, (11,11), (-1,-1), criteria)
+            imgpointsDireita.append(cornersSubDireita)
+
+    cv.destroyAllWindows()
 
     if count == 0:
         print("O padrao nao foi encontrado em nenhuma imagem")
     else:
-        cv.destroyAllWindows()
+        retE, mtxE, distE, rvecsE, tvecsE = cv.calibrateCamera(objpoints, imgpointsEsquerda, grayEsquerda.shape[::-1], None, None)
+        retD, mtxD, distD, rvecsD, tvecsD = cv.calibrateCamera(objpoints, imgpointsDireita, grayDireita.shape[::-1], None, None)
+        
+        novaCameraE = cv.getOptimalNewCameraMatrix(mtxE, distE, (640, 480), 1, (640, 480))
+        novaCameraD = cv.getOptimalNewCameraMatrix(mtxD, distD, (640, 480), 1, (640, 480))
+        
+        ## Calibração stereo
+        ## Encontrar relação entre as cameras
+        retStereo, novaMtxE, distE, novaMtxD, distD, rot, trans, essentialMatrix, fundamentalMatrix = cv.stereoCalibrate(objpoints, imgpointsEsquerda, imgpointsDireita, mtxE, distE, mtxD, distD, (640, 480), criteria)
 
-        ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+        # Rectificação stereo
+        rectE, rectD, projMtxE, projMtxD, Q, roiE, roiD = cv.stereoRectify(novaMtxE, distE, novaMtxD, distD, (640, 480), rot, trans, 1, (0, 0))
 
-        np.savetxt(path + '/calibration-data/ret.' + str(lado), [ret])
-        np.savetxt(path + '/calibration-data/mtx.' + str(lado), mtx)
-        np.savetxt(path + '/calibration-data/dist.' + str(lado), dist)
-        # np.savetxt(path + '/rvecs.param', rvecs) # Arrumar export de array 3d
-        # np.savetxt(path + '/tvecs.param', tvecs)
+        stereoMapE = cv.initUndistortRectifyMap(novaMtxE, distE, rectE, projMtxE, (640, 480), cv.CV_16SC2)
+        stereoMapD = cv.initUndistortRectifyMap(novaMtxD, distD, rectD, projMtxD, (640, 480), cv.CV_16SC2)
 
-        ## UNDISTORT
+        calibFile = cv.FileStorage(path + '/calibration-data/stereoMap.xml', cv.FILE_STORAGE_WRITE)
+        
+        calibFile.write('stereoMapE_x', stereoMapE[0])
+        calibFile.write('stereoMapE_y', stereoMapE[1])
+        calibFile.write('stereoMapD_x', stereoMapD[0])
+        calibFile.write('stereoMapD_y', stereoMapD[1])
 
-        # frame = cv.imread('teste.png') # trocar para cam
-        # h, w = frame.shape[:2]esquerda
-        # newcameramtx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
+        calibFile.release()
 
-        # dst = cv.undistort(frame, mtx, dist, None, newcameramtx)
-
-        # x, y, w, h = roi
-        # dst = dst[y:y+h, x:x+w]
-        # cv.imwrite('resultado.png', dst)
-
-main()
+calibrarCameras()

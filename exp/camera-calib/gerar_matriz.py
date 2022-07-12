@@ -21,7 +21,7 @@ def gerar_matriz(lado):
     objpoints = [] # 3d point in real world space
     imgpoints = [] # 2d points in image plane.
 
-    path = '/home/pauwels/Documents/pgc/exp/camera-calib'
+    path = '/home/pauwels/Documents/Sync/UFABC/PGC/pgc/exp/camera-calib'
     images = glob.glob(path + '/calibration-pics/*' + str(lado) +  '.png')
 
     count = 0

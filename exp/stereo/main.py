@@ -4,12 +4,14 @@ from matplotlib import pyplot as plt
 
 from parametros import Parametros
 
+path = "/home/pauwels/Documents/Sync/UFABC/PGC/pgc"
+
 def main():
     camera_esquerda = cv.VideoCapture(0)
     camera_direita = cv.VideoCapture(2)
 
     ### CARREGA PARAMETROS DO PATH
-    p = Parametros('/home/pauwels/Documents/pgc/exp/camera-calib/calibration-data')
+    p = Parametros(path + '/exp/camera-calib/calibration-data')
 
     ### CRIA CAMERAS CALIBRADAS
     camera_esquerda_nova, camera_direita_nova = calibrar(p, camera_esquerda, camera_direita)

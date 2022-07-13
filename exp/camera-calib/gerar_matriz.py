@@ -15,8 +15,8 @@ def calibrarCameras():
     imgpointsDireita = []
 
     path = '/home/pauwels/Documents/Sync/UFABC/PGC/pgc/exp/camera-calib'
-    imagesEsquerda = glob.glob(path + '/calibration-pics/esquerda/*.png')
-    imagesDireita = glob.glob(path + '/calibration-pics/direita/*.png')
+    imagesEsquerda = sorted(glob.glob(path + '/calibration-pics/esquerda/*.png'))
+    imagesDireita = sorted(glob.glob(path + '/calibration-pics/direita/*.png'))
 
     count = 0
     for esq, direita in zip(imagesEsquerda, imagesDireita):
@@ -39,8 +39,6 @@ def calibrarCameras():
             cornersSubDireita = cv.cornerSubPix(grayDireita, cornersD, (11,11), (-1,-1), criteria)
             imgpointsDireita.append(cornersSubDireita)
 
-    cv.destroyAllWindows()
-
     if count == 0:
         print("O padrao nao foi encontrado em nenhuma imagem")
     else:
@@ -54,7 +52,7 @@ def calibrarCameras():
         ## Encontrar relação entre as cameras
         retStereo, novaMtxE, distE, novaMtxD, distD, rot, trans, essentialMatrix, fundamentalMatrix = cv.stereoCalibrate(objpoints, imgpointsEsquerda, imgpointsDireita, mtxE, distE, mtxD, distD, (640, 480), criteria)
 
-        # Rectificação stereo
+        # Retificação stereo
         rectE, rectD, projMtxE, projMtxD, Q, roiE, roiD = cv.stereoRectify(novaMtxE, distE, novaMtxD, distD, (640, 480), rot, trans, 1, (0, 0))
 
         stereoMapE = cv.initUndistortRectifyMap(novaMtxE, distE, rectE, projMtxE, (640, 480), cv.CV_16SC2)

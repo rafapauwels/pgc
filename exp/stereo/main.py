@@ -2,7 +2,7 @@ import cv2 as cv
 import numpy as np
 from matplotlib import pyplot as plt
 
-from parametros import Parametros
+from calibrador import Calibrador
 
 path = "/home/pauwels/Documents/Sync/UFABC/PGC/pgc"
 
@@ -10,30 +10,26 @@ def main():
     camera_esquerda = cv.VideoCapture(0)
     camera_direita = cv.VideoCapture(2)
 
-    ### CARREGA PARAMETROS DO PATH
-    p = Parametros(path + '/exp/camera-calib/calibration-data')
+    ### CARREGA CALIBRADOR COM MAPA DE PARAMS
+    calib = Calibrador(path + '/exp/stereo/stereoMap.xml')
 
-    ### CRIA CAMERAS CALIBRADAS
-    camera_esquerda_nova, camera_direita_nova = calibrar(p, camera_esquerda, camera_direita)
-
-    stereo = cv.StereoBM_create(numDisparities=0, blockSize=15)
+    # stereo = cv.StereoBM_create(numDisparities=0, blockSize=15)
 
     while (True):
-        ret_esquerda, frame_esquerda = camera_esquerda.read()
-        ret_direita, frame_direita = camera_direita.read()
+        _, frame_esquerda = camera_esquerda.read()
+        _, frame_direita = camera_direita.read()
 
-        ### REMOVE DISTORCAO USANDO CAMERAS CALIBRADAS E PARAMETROS DAS CAMERAS
-        # frame_esquerda = cv.undistort(frame_esquerda, p.mtx_esquerda, p.dist_esquerda, None, camera_esquerda_nova)
-        # frame_direita = cv.undistort(frame_direita, p.mtx_direita, p.dist_direita, None, camera_direita_nova)
+        frame_esquerda, frame_direita = calib.acertar_frames(frame_esquerda, frame_direita)
 
         frame_esquerda_gray = cv.cvtColor(frame_esquerda, cv.COLOR_BGR2GRAY)
         frame_direita_gray = cv.cvtColor(frame_direita, cv.COLOR_BGR2GRAY)
 
-        disparity = stereo.compute(frame_esquerda_gray, frame_direita_gray)
+        # disparity = stereo.compute(frame_esquerda_gray, frame_direita_gray)
 
-        cv.imshow('Esquerda', frame_esquerda_gray)
-        cv.imshow('Direita', frame_direita_gray)
-        cv.imshow('Disparity', disparity)
+        cv.imshow('Esquerda', frame_esquerda)
+        cv.imshow('Direita', frame_direita)
+
+        # cv.imshow('Disparity', disparity)
         
         key = cv.waitKey(1)
         if  key & 0xFF == ord('q'):

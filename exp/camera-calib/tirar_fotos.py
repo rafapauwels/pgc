@@ -10,8 +10,8 @@ i = 0
 while (True):
     _, frame_0 = cam_0.read()
     _, frame_2 = cam_2.read()
-    cv.imshow("0", frame_0)
-    cv.imshow("2", frame_2)
+    cv.imshow("direita 0", frame_0)
+    cv.imshow("esquerda 2", frame_2)
 
     key = cv.waitKey(1)
     if  key & 0xFF == ord('q'):

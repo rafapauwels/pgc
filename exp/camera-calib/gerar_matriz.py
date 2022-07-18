@@ -3,7 +3,7 @@ import cv2 as cv
 import glob
 
 def calibrarCameras():
-    tamanhoChess = (5,5)
+    tamanhoChess = (9,7)
 
     criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
@@ -38,6 +38,12 @@ def calibrarCameras():
 
             cornersSubDireita = cv.cornerSubPix(grayDireita, cornersD, (11,11), (-1,-1), criteria)
             imgpointsDireita.append(cornersSubDireita)
+
+            cv.drawChessboardCorners(imgEsquerda, tamanhoChess, cornersE, retE)
+            cv.imshow('img esq', imgEsquerda)
+            cv.drawChessboardCorners(imgDireita, tamanhoChess, cornersD, retD)
+            cv.imshow('img dir', imgDireita)
+            cv.waitKey(1000)
 
     if count == 0:
         print("O padrao nao foi encontrado em nenhuma imagem")

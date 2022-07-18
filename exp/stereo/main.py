@@ -1,35 +1,103 @@
 import cv2 as cv
 import numpy as np
 from matplotlib import pyplot as plt
+import PySimpleGUI as sg
 
 from calibrador import Calibrador
 
 path = "/home/pauwels/Documents/Sync/UFABC/PGC/pgc"
 
 def main():
-    camera_esquerda = cv.VideoCapture(0)
-    camera_direita = cv.VideoCapture(2)
+    layout = [
+        [sg.Text("Blocksize"), sg.Slider(key="blocksize", range=(-1,30), orientation='h', enable_events=True)],
+        [sg.Text("Min disp"), sg.Slider(key="mindisp", range=(-128,128), orientation='h', enable_events=True)],
+        [sg.Text("Max disp"), sg.Slider(key="maxdisp", range=(0,128), orientation='h', enable_events=True)],
+        [sg.Text("Uniqueness"), sg.Slider(key="uniqueness", range=(5,15), orientation='h', enable_events=True)],
+        [sg.Text("Speckle size"), sg.Slider(key="specklesize", range=(50,200), orientation='h', enable_events=True)]
+    ]
+    
+    window = sg.Window("Controles", layout=layout)
+
+    camera_direita = cv.VideoCapture(0)
+    camera_esquerda = cv.VideoCapture(2)
 
     ### CARREGA CALIBRADOR COM MAPA DE PARAMS
     calib = Calibrador(path + '/exp/stereo/stereoMap.xml')
 
-    # stereo = cv.StereoBM_create(numDisparities=0, blockSize=15)
+    block_size = 11
+    min_disp = -128
+    max_disp = 128
+    # Maximum disparity minus minimum disparity. The value is always greater than zero.
+    # In the current implementation, this parameter must be divisible by 16.
+    num_disp = max_disp - min_disp
+    # Margin in percentage by which the best (minimum) computed cost function value should "win" the second best value to consider the found match correct.
+    # Normally, a value within the 5-15 range is good enough
+    uniquenessRatio = 5
+    # Maximum size of smooth disparity regions to consider their noise speckles and invalidate.
+    # Set it to 0 to disable speckle filtering. Otherwise, set it somewhere in the 50-200 range.
+    speckleWindowSize = 200
+    # Maximum disparity variation within each connected component.
+    # If you do speckle filtering, set the parameter to a positive value, it will be implicitly multiplied by 16.
+    # Normally, 1 or 2 is good enough.
+    speckleRange = 2
+    disp12MaxDiff = 0
+
+    stereo = cv.StereoSGBM_create(
+        minDisparity=min_disp,
+        numDisparities=num_disp,
+        blockSize=block_size,
+        uniquenessRatio=uniquenessRatio,
+        speckleWindowSize=speckleWindowSize,
+        speckleRange=speckleRange,
+        disp12MaxDiff=disp12MaxDiff,
+        P1=8 * 1 * block_size * block_size,
+        P2=32 * 1 * block_size * block_size,
+    )
 
     while (True):
         _, frame_esquerda = camera_esquerda.read()
         _, frame_direita = camera_direita.read()
+
+        event, values = window.read(timeout=20)
+
+        if event == 'blocksize':
+            block_size = int(values['blocksize'])
+        elif event == 'mindisp':
+            min_disp = int(values['mindisp'])
+        elif event == 'maxdisp':
+            max_disp = int(values['maxdisp'])
+        elif event == 'uniqueness':
+            uniquenessRatio = int(values['uniqueness'])
+        elif event == 'specklesize':
+            speckleWindowSize = int(values['specklesize'])
+
+        stereo = cv.StereoSGBM_create(
+            minDisparity=min_disp,
+            numDisparities=num_disp,
+            blockSize=block_size,
+            uniquenessRatio=uniquenessRatio,
+            speckleWindowSize=speckleWindowSize,
+            speckleRange=speckleRange,
+            disp12MaxDiff=disp12MaxDiff,
+            P1=8 * 1 * block_size * block_size,
+            P2=32 * 1 * block_size * block_size,
+        )
+        
 
         frame_esquerda, frame_direita = calib.acertar_frames(frame_esquerda, frame_direita)
 
         frame_esquerda_gray = cv.cvtColor(frame_esquerda, cv.COLOR_BGR2GRAY)
         frame_direita_gray = cv.cvtColor(frame_direita, cv.COLOR_BGR2GRAY)
 
-        # disparity = stereo.compute(frame_esquerda_gray, frame_direita_gray)
+        disparity = stereo.compute(frame_esquerda_gray, frame_direita_gray)
+
+        disparity = cv.normalize(disparity, disparity, alpha=255, beta=0, norm_type=cv.NORM_MINMAX)
+        disparity = np.uint8(disparity)
 
         cv.imshow('Esquerda', frame_esquerda)
         cv.imshow('Direita', frame_direita)
 
-        # cv.imshow('Disparity', disparity)
+        cv.imshow('Disparity', disparity)
         
         key = cv.waitKey(1)
         if  key & 0xFF == ord('q'):

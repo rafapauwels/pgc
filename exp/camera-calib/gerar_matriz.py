@@ -29,6 +29,7 @@ def calibrarCameras():
         retE, cornersE = cv.findChessboardCorners(grayEsquerda, tamanhoChess, None)
         retD, cornersD = cv.findChessboardCorners(grayDireita, tamanhoChess, None)
 
+        print("E: " + str(retE) + " D: " + str(retD))
         if retE and retD == True:
             count += 1
             objpoints.append(objp)
@@ -43,11 +44,12 @@ def calibrarCameras():
             cv.imshow('img esq', imgEsquerda)
             cv.drawChessboardCorners(imgDireita, tamanhoChess, cornersD, retD)
             cv.imshow('img dir', imgDireita)
-            cv.waitKey(1000)
+            cv.waitKey(5000)
 
     if count == 0:
         print("O padrao nao foi encontrado em nenhuma imagem")
     else:
+        print("Padrao encontrado em " + str(count) + " imgs")
         retE, mtxE, distE, rvecsE, tvecsE = cv.calibrateCamera(objpoints, imgpointsEsquerda, grayEsquerda.shape[::-1], None, None)
         retD, mtxD, distD, rvecsD, tvecsD = cv.calibrateCamera(objpoints, imgpointsDireita, grayDireita.shape[::-1], None, None)
         
@@ -73,4 +75,5 @@ def calibrarCameras():
 
         calibFile.release()
 
-calibrarCameras()
+if __name__ == '__main__':
+    calibrarCameras()

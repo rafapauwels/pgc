@@ -1,10 +1,11 @@
 import cv2 as cv
 import os
+import gerar_matriz
 
 path = "/home/pauwels/Documents/Sync/UFABC/PGC/pgc/exp/camera-calib/calibration-pics"
 
-cam_0 = cv.VideoCapture(0)
-cam_2 = cv.VideoCapture(2)
+cam_0 = cv.VideoCapture(2)
+cam_2 = cv.VideoCapture(0)
 
 i = 0
 while (True):
@@ -28,7 +29,9 @@ while (True):
         cv.imwrite(arquivo_2, frame_2)
         i += 1
 
-    
+    if key & 0xFF == ord('c'):
+        gerar_matriz.calibrarCameras()
+        break
 
 cam_0.release()
 cam_2.release()

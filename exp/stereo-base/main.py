@@ -13,7 +13,9 @@ def main():
         [sg.Text("Min disp"), sg.Slider(key="mindisp", range=(-128,128), orientation='h', enable_events=True)],
         [sg.Text("Max disp"), sg.Slider(key="maxdisp", range=(0,128), orientation='h', enable_events=True)],
         [sg.Text("Uniqueness"), sg.Slider(key="uniqueness", range=(5,15), orientation='h', enable_events=True)],
-        [sg.Text("Speckle size"), sg.Slider(key="specklesize", range=(50,200), orientation='h', enable_events=True)]
+        [sg.Text("Speckle size"), sg.Slider(key="specklesize", range=(50,200), orientation='h', enable_events=True)],
+        [sg.Text("Gauss1"), sg.Slider(key="gauss1", range=(5,50), orientation='h', enable_events=True)],
+        [sg.Text("Gauss2"), sg.Slider(key="gauss2", range=(0,50), orientation='h', enable_events=True)],
     ]
     
     window = sg.Window("Controles", layout=layout)
@@ -93,6 +95,9 @@ def main():
 
         frame_esquerda_gray = cv.cvtColor(frame_esquerda, cv.COLOR_BGR2GRAY)
         frame_direita_gray = cv.cvtColor(frame_direita, cv.COLOR_BGR2GRAY)
+
+        frame_esquerda_gray = cv.GaussianBlur(frame_esquerda_gray, (5,5), cv.BORDER_DEFAULT)
+        frame_direita_gray = cv.GaussianBlur(frame_direita_gray, (5,5), cv.BORDER_DEFAULT)
 
         disparity = stereo.compute(frame_esquerda_gray, frame_direita_gray)
 

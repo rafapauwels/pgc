@@ -1,3 +1,4 @@
+from dis import dis
 import cv2 as cv
 import numpy as np
 from matplotlib import pyplot as plt
@@ -26,7 +27,7 @@ def main():
     ### CARREGA CALIBRADOR COM MAPA DE PARAMS
     calib = Calibrador(path + '/exp/stereo-base/stereoMap.xml')
 
-    block_size = 5
+    block_size = 10
     min_disp = -128
     max_disp = 0
     # Maximum disparity minus minimum disparity. The value is always greater than zero.
@@ -96,8 +97,8 @@ def main():
         frame_esquerda_gray = cv.cvtColor(frame_esquerda, cv.COLOR_BGR2GRAY)
         frame_direita_gray = cv.cvtColor(frame_direita, cv.COLOR_BGR2GRAY)
 
-        frame_esquerda_gray = cv.GaussianBlur(frame_esquerda_gray, (5,5), cv.BORDER_DEFAULT)
-        frame_direita_gray = cv.GaussianBlur(frame_direita_gray, (5,5), cv.BORDER_DEFAULT)
+        # frame_esquerda_gray = cv.GaussianBlur(frame_esquerda_gray, (5,5), cv.BORDER_DEFAULT)
+        # frame_direita_gray = cv.GaussianBlur(frame_direita_gray, (5,5), cv.BORDER_DEFAULT)
 
         disparity = stereo.compute(frame_esquerda_gray, frame_direita_gray)
 
@@ -109,6 +110,11 @@ def main():
 
         cv.imshow('Disparity', disparity)
         
+        # d = cv.erode(disparity, None, iterations=2)
+        # d = cv.dilate(d, None, iterations=2)
+        
+        # cv.imshow('Disparity2', d)
+
         key = cv.waitKey(1)
         if  key & 0xFF == ord('q'):
             break

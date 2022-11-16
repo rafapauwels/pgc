@@ -1,0 +1,7 @@
+{
+    "files.exclude": {
+        "exp": true,
+        "misc": true,
+        ".gitignore": true
+    }
+}

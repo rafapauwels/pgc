@@ -1,3 +1,4 @@
+import math
 import cv2 as cv
 import numpy as np
 import imutils
@@ -8,21 +9,22 @@ from calibrador import Calibrador
 def main():
     path = "/home/pauwels/Documents/Sync/UFABC/PGC/pgc"
 
-    plt.ion()
-    fig = plt.figure()
-    ax = plt.axes(projection='3d')
-    ax.set_xlim3d(0, 800)
-    ax.set_ylim3d(0, 100)
-    ax.set_zlim3d(0, 800)
+    # Gráfico 3D
+    # plt.ion()
+    # fig = plt.figure()
+    # ax = plt.axes(projection='3d')
+    # ax.set_xlim3d(0, 800)
+    # ax.set_ylim3d(0, 100)
+    # ax.set_zlim3d(0, 800)
 
     cam_e = cv.VideoCapture(0)
     cam_d = cv.VideoCapture(2)
 
-    dist_cam = 11      # Distancia entre o centro das cameras em cm (ajustar)
-    f_cam = 6          # Distancia focal em mm (ajustar)
-    campo_cam = 56.6   # Campo de visao em graus (ajustar)
+    dist_cam = 10      # Distancia entre o centro das cameras em cm (ajustar)
+    f_cam = 6.858          # Distancia focal em mm (ajustar)
+    campo_cam = 78   # Campo de visao em graus (ajustar)
 
-    calib = Calibrador(path + '/exp/stereo-match/stereoMap.xml')
+    # calib = Calibrador(path + '/exp/stereo-match/stereoMap.xml')
 
     disable = False
 
@@ -38,13 +40,12 @@ def main():
         obj_e = findCircle(frame_blur_e)
         obj_d = findCircle(frame_blur_d)
 
-        cv.imshow('ESQUERDA', frame_blur_e)
         # cv.imshow('DIREITA', frame_blur_d)
 
         m = hsv_filter(frame_blur_e)
         cv.imshow("mask", m)
         cv.imshow("bitwise esq", cv.bitwise_and(frame_blur_e, frame_blur_e, mask=m))
-        # cv.imshow("filtro dir", hsv_filter(frame_ori_d))
+        cv.imshow("filtro dir", hsv_filter(frame_ori_d))
 
         key = cv.waitKey(1)
         if  key & 0xFF == ord('q'):
@@ -52,28 +53,38 @@ def main():
 
         # Triangular
         # F(mm) = F(pixels) * SensorWidth(mm) / ImageWidth (pixel).
+        # F(mm) * Width / SensorWidth = F(pixels)
         if (disable or obj_e == None or obj_d == None):
             continue
 
         heigh, width, depth = frame_ori_e.shape
-        f_pixel = (width * 0.5) / np.tan(campo_cam * 0.5 * np.pi/180)
-
+        # f_pixel = (width * 0.5) / np.tan(campo_cam * 0.5 * np.pi/180)
+        f_pixel = f_cam * width / 6
+        print(heigh, width, depth)
         x_e = obj_e[0]
         x_d = obj_d[0]
 
         disparidade = x_e - x_d
         dist = abs((dist_cam * f_pixel) / disparidade)
 
-        # draw3D(obj_e[0], dist, obj_e[1], fig, ax)
+        # draw3D(pos_x, dist, pos_y, fig, ax)
 
         print(dist)
-        cv.putText(frame_ori_e, str(round(dist, 3)), (250, 100), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2)
+        cv.putText(frame_blur_e, str(round(dist, 3)), (100, 100), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2, cv.LINE_AA)
+        cv.imshow('ESQUERDA', frame_blur_e)
+
+def findArUco(frame):
+    return 0,0
 
 def draw3D(x, y, z, fig, ax):
     ax.scatter(x, y, -z)
     plt.draw()
     plt.pause(0.1)
     # ax.cla()
+
+def findQr(frame, detector):
+    _, points, _ = detector.detectAndDecode(frame)
+    return points
 
 # Encontra maior circulo verde dentro do frame
 def findCircle(frame):

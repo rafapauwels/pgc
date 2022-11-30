@@ -1,19 +1,32 @@
-import cv2 as cv
+import cv2
 
 class Frames:
     def __init__(self):
-        self.cam_e = cv.VideoCapture(0)
-        self.cam_d = cv.VideoCapture(2)
+        self.cam_e = cv2.VideoCapture(0)
+        self.cam_d = cv2.VideoCapture(2)
+        self.count = 0
 
-    def capturar_frames(self):
+    def capturar_frames(self, live):
         parar = False
-        if cv.waitKey(1) & 0xFF == ord('q'):
+        key = cv2.waitKey(1)
+        if key & 0xFF == ord('q'):
             parar = True
 
         _, frame_e = self.cam_e.read()
         _, frame_d = self.cam_d.read()
 
-        return parar, frame_e, frame_d
+        if key & 0xFF == ord('s'):
+            cv2.imwrite("./img_e.png", frame_e)
+            cv2.imwrite("./img_d.png", frame_d)
+
+        if live:
+            return parar, frame_e, frame_d
+        else:
+            # usar frames fixos
+            e = cv2.imread("./img_e.png")
+            d = cv2.imread("./img_d.png")
+
+            return parar, e, d
 
     def mostrar_frames(self, titulo, frame):
-        cv.imshow(titulo, frame)
+        cv2.imshow(titulo, frame)

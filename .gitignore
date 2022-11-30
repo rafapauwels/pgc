@@ -1,2 +1,1 @@
-exp/camera-calib/calibration-pics/direita/*.png
-exp/camera-calib/calibration-pics/esquerda/*.png
+*.png

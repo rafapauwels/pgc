@@ -44,12 +44,14 @@ def calibrarCameras():
             cv.imshow('img esq', imgEsquerda)
             cv.drawChessboardCorners(imgDireita, tamanhoChess, cornersD, retD)
             cv.imshow('img dir', imgDireita)
-            cv.waitKey(2500)
+            cv.waitKey(2000)
 
     if count == 0:
         print("O padrao nao foi encontrado em nenhuma imagem")
     else:
         print("Padrao encontrado em " + str(count) + " imgs")
+        print("shape esquerdo: " + str(grayEsquerda.shape))
+        print("shape direito: " + str(grayD.shape))
         retE, mtxE, distE, rvecsE, tvecsE = cv.calibrateCamera(objpoints, imgpointsEsquerda, grayEsquerda.shape[::-1], None, None)
         retD, mtxD, distD, rvecsD, tvecsD = cv.calibrateCamera(objpoints, imgpointsDireita, grayDireita.shape[::-1], None, None)
         
@@ -61,7 +63,7 @@ def calibrarCameras():
         retStereo, novaMtxE, distE, novaMtxD, distD, rot, trans, essentialMatrix, fundamentalMatrix = cv.stereoCalibrate(objpoints, imgpointsEsquerda, imgpointsDireita, mtxE, distE, mtxD, distD, (640, 480), criteria)
 
         # Retificação stereo
-        rectE, rectD, projMtxE, projMtxD, Q, roiE, roiD = cv.stereoRectify(novaMtxE, distE, novaMtxD, distD, (640, 480), rot, trans, 1, (0, 0))
+        rectE, rectD, projMtxE, projMtxD, Qmatrix, roiE, roiD = cv.stereoRectify(novaMtxE, distE, novaMtxD, distD, (640, 480), rot, trans, 1, (0, 0))
 
         stereoMapE = cv.initUndistortRectifyMap(novaMtxE, distE, rectE, projMtxE, (640, 480), cv.CV_16SC2)
         stereoMapD = cv.initUndistortRectifyMap(novaMtxD, distD, rectD, projMtxD, (640, 480), cv.CV_16SC2)
@@ -74,6 +76,11 @@ def calibrarCameras():
         calibFile.write('stereoMapD_y', stereoMapD[1])
 
         calibFile.release()
+
+        QFile = cv.FileStorage(path + '/calibration-data/Q.mat', cv.FILE_STORAGE_WRITE)
+        QFile.write('matrix', Qmatrix)
+        QFile.release()
+
 
 if __name__ == '__main__':
     calibrarCameras()

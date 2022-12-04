@@ -11,10 +11,11 @@ def encontrar_centro(frame, desenhar):
 
     # frame_flip = cv2.flip(frame, 0)
     corners, ids, _ = cv2.aruco.detectMarkers(frame, arucoDict, parameters=arucoParams)
-    centro, frame = desenhar_marcador(corners, ids, frame, desenhar)
-    return centro, frame
+    centros, frame = desenhar_marcadores(corners, ids, frame, desenhar)
+    return centros, frame
 
-def desenhar_marcador(corners, ids, frame, desenhar):
+def desenhar_marcadores(corners, ids, frame, desenhar):
+    centros = { 1: (float('inf'), float('inf')), 2: (float('inf'), float('inf'))}
     if len(corners) > 0:
         for (corner, id) in zip(corners, ids):
             (topL, topR, botR, botL) = corner.reshape((4, 2))
@@ -33,17 +34,19 @@ def desenhar_marcador(corners, ids, frame, desenhar):
                 cv2.line(frame, botL, topL, cor, 2)
                 
                 cv2.circle(frame, (cx, cy), 4, cor, -1)
-            return (cx, cy), frame
-    return (0, 0), frame
+            centro = (cx, cy)
+            centros[id[0]] = centro
+    return centros, frame
 
 def gerar_aruco():
     arucoDict = cv2.aruco.Dictionary_get(ARUCO_MARKER)
-    id = 1
     tag_size = 1000
     tag = np.zeros((tag_size, tag_size, 1), dtype="uint8")
 
-    cv2.aruco.drawMarker(arucoDict, id, tag_size, tag, 1)
-    cv2.imwrite("marker.png", tag)
+    cv2.aruco.drawMarker(arucoDict, 1, tag_size, tag, 1)
+    cv2.imwrite("marker1.png", tag)
+    cv2.aruco.drawMarker(arucoDict, 2, tag_size, tag, 1)
+    cv2.imwrite("marker2.png", tag)
 
 if __name__ == '__main__':
     gerar_aruco()

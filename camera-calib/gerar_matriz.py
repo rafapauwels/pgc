@@ -2,7 +2,7 @@ import numpy as np
 import cv2 as cv
 import glob
 
-def calibrarCameras():
+def calibrar_cameras(path):
     tamanhoChess = (9,7)
 
     criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
@@ -14,7 +14,6 @@ def calibrarCameras():
     imgpointsEsquerda = []
     imgpointsDireita = []
 
-    path = '/home/pauwels/Documents/Sync/UFABC/PGC/pgc/camera-calib'
     imagesEsquerda = sorted(glob.glob(path + '/calibration-pics/esquerda/*.png'))
     imagesDireita = sorted(glob.glob(path + '/calibration-pics/direita/*.png'))
 
@@ -44,14 +43,13 @@ def calibrarCameras():
             cv.imshow('img esq', imgEsquerda)
             cv.drawChessboardCorners(imgDireita, tamanhoChess, cornersD, retD)
             cv.imshow('img dir', imgDireita)
-            cv.waitKey(2000)
+            # cv.waitKey(2000)
 
     if count == 0:
         print("O padrao nao foi encontrado em nenhuma imagem")
     else:
         print("Padrao encontrado em " + str(count) + " imgs")
         print("shape esquerdo: " + str(grayEsquerda.shape))
-        print("shape direito: " + str(grayD.shape))
         retE, mtxE, distE, rvecsE, tvecsE = cv.calibrateCamera(objpoints, imgpointsEsquerda, grayEsquerda.shape[::-1], None, None)
         retD, mtxD, distD, rvecsD, tvecsD = cv.calibrateCamera(objpoints, imgpointsDireita, grayDireita.shape[::-1], None, None)
         
@@ -81,6 +79,9 @@ def calibrarCameras():
         QFile.write('matrix', Qmatrix)
         QFile.release()
 
+        QFile = cv.FileStorage(path + '/calibration-data/K1.mat', cv.FILE_STORAGE_WRITE)
+        QFile.write('matrix', projMtxE)
+        QFile.release()
 
 if __name__ == '__main__':
-    calibrarCameras()
+    calibrar_cameras('/home/pauwels/Documents/Sync/UFABC/PGC/pgc/camera-calib')

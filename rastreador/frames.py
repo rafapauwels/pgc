@@ -1,9 +1,14 @@
 import cv2
+import platform
 
 class Frames:
     def __init__(self):
         self.cam_e = cv2.VideoCapture(0)
-        self.cam_d = cv2.VideoCapture(2)
+        if platform.system() == "Windows":
+            self.cam_d = cv2.VideoCapture(1)
+        else:
+            self.cam_d = cv2.VideoCapture(2)
+            
         self.count = 0
 
     def capturar_frames(self, live):

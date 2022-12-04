@@ -1,0 +1,11 @@
+{
+    "block_size":10,
+    "min_disp":-128,
+    "num_disp":128,
+    "disp12MaxDiff":0,
+    "preFilterCap":0,
+    "uniquenessRatio":5,
+    "speckleWindowSize":200,
+    "speckleRange":2,
+    "mode":0
+}
